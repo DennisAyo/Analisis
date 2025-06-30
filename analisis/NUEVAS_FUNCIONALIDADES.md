@@ -2,12 +2,12 @@
 
 ## Resumen de Implementación
 
-Se han agregado las siguientes nuevas entidades según el modelo de datos actualizado:
+Se han implementado las siguientes entidades según el modelo de datos actualizado:
 
 1. **ConsultaBuro**: Gestión de consultas de buró crediticio
-2. **ReglaEvaluacionCrediticia**: Definición y gestión de reglas para evaluación
-3. **EvaluacionCrediticia**: Evaluaciones crediticias con scoring automático
-4. **ValidacionRegla**: Resultados de aplicar reglas a evaluaciones
+2. **EvaluacionCrediticia**: Evaluaciones crediticias con scoring automático
+3. **ObservacionAnalista**: Observaciones y comentarios de analistas
+4. **InformeBuro**: Informes detallados de buró con análisis financiero
 
 ## Nuevos Endpoints
 
@@ -43,48 +43,11 @@ GET /v1/consultas-buro/cliente/12345/score-mejor
 PATCH /v1/consultas-buro/1/estado?estado=PROCESADA
 ```
 
-### 2. Reglas de Evaluación (`/v1/reglas-evaluacion`)
-
-#### Crear nueva regla
-```http
-POST /v1/reglas-evaluacion
-Content-Type: application/json
-
-{
-  "nombre": "Verificación de ingresos mínimos",
-  "descripcion": "Verifica que los ingresos sean superiores a 3 veces la cuota",
-  "condicion": "ingresos >= (cuota * 3)",
-  "prioridad": 1,
-  "activa": true,
-  "version": 1
-}
-```
-
-#### Obtener reglas activas
-```http
-GET /v1/reglas-evaluacion/activas
-```
-
-#### Buscar reglas por nombre
-```http
-GET /v1/reglas-evaluacion?nombre=ingresos
-```
-
-#### Activar/Desactivar regla
-```http
-PATCH /v1/reglas-evaluacion/1/toggle-activa
-```
-
-#### Actualizar prioridad
-```http
-PATCH /v1/reglas-evaluacion/1/prioridad?prioridad=5
-```
-
-### 3. Evaluaciones Crediticias (`/v1/evaluaciones-crediticias`)
+### 2. Evaluaciones Crediticias (`/v1/evaluaciones-crediticias`)
 
 #### Crear evaluación automática
 ```http
-POST /v1/evaluaciones-crediticias/automatica?idSolicitud=12345&idConsultaBuro=10
+POST /v1/evaluaciones-crediticias/automatica?idSolicitud=12345&idInformeBuro=10
 ```
 
 #### Crear evaluación manual
@@ -94,7 +57,7 @@ Content-Type: application/json
 
 {
   "idSolicitud": 12345,
-  "idConsultaBuro": 10,
+  "idInformeBuro": 10,
   "scoreInterno": 680,
   "categoriaRiesgo": "MEDIO",
   "esAutomatico": false,
@@ -103,19 +66,14 @@ Content-Type: application/json
 }
 ```
 
-#### Obtener evaluaciones por solicitud
+#### Obtener evaluaciones por informe de buró
+```http
+GET /v1/evaluaciones-crediticias/informe-buro/1
+```
+
+#### Obtener evaluación por solicitud
 ```http
 GET /v1/evaluaciones-crediticias/solicitud/12345
-```
-
-#### Obtener última evaluación de una solicitud
-```http
-GET /v1/evaluaciones-crediticias/solicitud/12345/ultima
-```
-
-#### Calcular categoría de riesgo por score
-```http
-GET /v1/evaluaciones-crediticias/score/680/categoria
 ```
 
 #### Actualizar categoría de riesgo
@@ -123,95 +81,200 @@ GET /v1/evaluaciones-crediticias/score/680/categoria
 PATCH /v1/evaluaciones-crediticias/1/categoria-riesgo?categoria=ALTO
 ```
 
-### 4. Validaciones de Reglas (`/v1/validaciones-reglas`)
+### 3. Observaciones de Analistas (`/v1/observaciones-analistas`)
 
-#### Obtener validaciones por evaluación
+#### Crear nueva observación
 ```http
-GET /v1/validaciones-reglas/evaluacion/5
-```
-
-#### Obtener validaciones fallidas por solicitud
-```http
-GET /v1/validaciones-reglas/solicitud/12345/fallidas
-```
-
-#### Obtener resumen de validaciones
-```http
-GET /v1/validaciones-reglas/evaluacion/5/resumen
-```
-
-#### Crear validación manual
-```http
-POST /v1/validaciones-reglas
+POST /v1/observaciones-analistas
 Content-Type: application/json
 
 {
-  "idEvaluacionesCrediticias": 5,
-  "idRegla": 3,
-  "resultado": true,
-  "fecha": "2024-01-15T15:45:00"
+  "idSolicitud": 12345,
+  "usuario": "analista.juan",
+  "razonIntervencion": "Cliente presenta ingresos inconsistentes con declaración inicial",
+  "observacion": "Se requiere verificación adicional de ingresos mediante estados de cuenta",
+  "fechaHora": "2024-01-15T16:30:00",
+  "version": 1
 }
+```
+
+#### Obtener observaciones por solicitud
+```http
+GET /v1/observaciones-analistas/solicitud/12345
+```
+
+#### Obtener observaciones por usuario
+```http
+GET /v1/observaciones-analistas/usuario/analista.juan
+```
+
+#### Obtener observaciones recientes
+```http
+GET /v1/observaciones-analistas/recientes?dias=7
+```
+
+### 4. Informes de Buró (`/v1/informes-buro`)
+
+#### Crear nuevo informe detallado
+```http
+POST /v1/informes-buro
+Content-Type: application/json
+
+{
+  "idConsultaBuro": 1,
+  "score": 720,
+  "numeroDeudaImpagas": 2,
+  "montoTotalAdeudado": 25000.50,
+  "capacidadPagoReportada": 8000.00,
+  "jsonRespuestaCompleta": "{\"detalle_creditos\":[{\"entidad\":\"Banco XYZ\",\"saldo\":15000}]}",
+  "version": 1
+}
+```
+
+#### Obtener informe por consulta de buró
+```http
+GET /v1/informes-buro/consulta-buro/1
+```
+
+#### Buscar informes por rango de score
+```http
+GET /v1/informes-buro/score/rango?scoreMin=650&scoreMax=750
+```
+
+#### Buscar informes por score mínimo
+```http
+GET /v1/informes-buro/score/minimo?scoreMin=700
+```
+
+#### Buscar por número de deudas impagas
+```http
+GET /v1/informes-buro/deudas/2
+```
+
+#### Calcular ratio deuda/capacidad de pago
+```http
+GET /v1/informes-buro/1/ratio-deuda-capacidad
+```
+**Respuesta:**
+```json
+{
+  "idInforme": 1,
+  "ratioDeudaCapacidad": 3.125,
+  "montoTotalAdeudado": 25000.50,
+  "capacidadPagoReportada": 8000.00,
+  "interpretacion": "MALO - Capacidad de pago insuficiente"
+}
+```
+
+#### Actualizar JSON de respuesta
+```http
+PATCH /v1/informes-buro/1/json-respuesta
+Content-Type: application/json
+
+"{\"actualizacion\":\"datos_adicionales\",\"fecha\":\"2024-01-16\"}"
 ```
 
 ## Flujo de Trabajo Típico
 
 ### 1. Consulta de Buró
-1. Crear consulta de buró para un cliente
-2. Obtener score y detalles de deudas
-3. Actualizar estado según resultado
+1. **Crear consulta de buró** para un cliente prospecto
+2. **Obtener score** y detalles de deudas del buró
+3. **Crear informe detallado** con análisis financiero específico
+4. **Actualizar estado** según resultado de procesamiento
 
 ### 2. Evaluación Crediticia
-1. Crear evaluación automática basada en consulta de buró
-2. Sistema calcula automáticamente la categoría de riesgo
-3. Se pueden crear evaluaciones manuales si es necesario
+1. **Crear evaluación automática** basada en informe de buró
+2. **Sistema calcula automáticamente** la categoría de riesgo
+3. **Analista puede crear observaciones** para casos especiales
+4. **Evaluaciones manuales** para casos que requieren intervención humana
 
-### 3. Aplicación de Reglas
-1. Obtener reglas activas ordenadas por prioridad
-2. Aplicar cada regla a la evaluación crediticia
-3. Registrar resultados en ValidacionRegla
-
-### 4. Análisis de Resultados
-1. Consultar resumen de validaciones
-2. Identificar reglas que fallaron
-3. Tomar decisiones basadas en categoría de riesgo y validaciones
+### 3. Análisis de Riesgo
+1. **Consultar ratio deuda/capacidad** de pago del informe
+2. **Revisar observaciones** de analistas previos
+3. **Evaluar categoría de riesgo** calculada automáticamente
+4. **Tomar decisiones** basadas en análisis integral
 
 ## Categorías de Riesgo
 
 El sistema calcula automáticamente la categoría de riesgo basada en el score:
 
-- **BAJO**: Score >= 750
-- **MEDIO**: Score >= 650 y < 750  
-- **ALTO**: Score >= 550 y < 650
-- **MUY_ALTO**: Score < 550
+- **BAJO**: Score >= 750 (Excelente perfil crediticio)
+- **MEDIO**: Score >= 650 y < 750 (Buen perfil crediticio)
+- **ALTO**: Score >= 550 y < 650 (Perfil crediticio con precauciones)
+- **MUY_ALTO**: Score < 550 (Perfil crediticio de alto riesgo)
 - **SIN_SCORE**: Cuando no hay score disponible
 
 ## Estados de Consulta de Buró
 
 - **PENDIENTE**: Consulta iniciada pero no procesada
 - **EXITOSA**: Consulta realizada correctamente
-- **FALLIDA**: Error en la consulta
+- **FALLIDA**: Error en la consulta al buró
 - **PROCESADA**: Consulta procesada y utilizada en evaluación
 
-## Tecnologías Utilizadas
+## Interpretación de Ratio Deuda/Capacidad de Pago
 
-- **MapStruct**: Para mapeo automático entre entidades y DTOs
-- **Jakarta Validation**: Para validación de datos de entrada
-- **Swagger/OpenAPI**: Para documentación de APIs
-- **JPA/Hibernate**: Para persistencia con PostgreSQL
-- **Spring Boot**: Framework principal
-- **BigDecimal**: Para precisión en cálculos financieros
+- **EXCELENTE** (≤ 0.3): Capacidad de pago muy buena
+- **BUENO** (≤ 0.6): Capacidad de pago adecuada  
+- **REGULAR** (≤ 1.0): Capacidad de pago justa
+- **MALO** (> 1.0): Capacidad de pago insuficiente
+- **CRÍTICO** (999.99): Sin capacidad de pago reportada
 
-## Reglas de Negocio Implementadas
+## Funcionalidades Específicas por Entidad
 
-1. **Validación de Transiciones**: Las evaluaciones deben tener consulta de buró válida
-2. **Cálculo Automático**: La categoría de riesgo se calcula automáticamente
-3. **Versionado**: Todas las entidades manejan versionado para concurrencia
-4. **Auditoría**: Fechas automáticas en creación y modificación
-5. **Integridad**: Validaciones de FK y datos requeridos
+### ConsultaBuro
+- ✅ **Create, Read, Update parcial** (solo estado)
+- ✅ **Búsqueda por cliente, estado, fecha**
+- ✅ **Obtener mejor score de cliente**
+- ✅ **Verificar consultas exitosas**
+- ❌ **No Delete** (preservar historial)
 
-## Consideraciones de Seguridad
+### EvaluacionCrediticia  
+- ✅ **Create (manual y automática), Read, Update parcial** (solo categoría)
+- ✅ **Cálculo automático de categoría de riesgo**
+- ✅ **Búsqueda por solicitud, categoría, tipo, informe de buró**
+- ✅ **Evaluaciones basadas en informe de buró**
+- ❌ **No Delete** (preservar historial)
 
-- Todas las APIs incluyen validación de entrada
-- Manejo de excepciones sin exposición de datos sensibles
-- Versionado para prevenir actualizaciones concurrentes
-- Logging de operaciones críticas 
+### ObservacionAnalista
+- ✅ **Create, Read, Update, Delete**
+- ✅ **Búsqueda por solicitud, usuario, fecha**
+- ✅ **Filtros por período de tiempo**
+- ✅ **Estadísticas por analista**
+
+### InformeBuro
+- ✅ **Create, Read, Update parcial** (solo JSON de respuesta)
+- ✅ **Análisis financiero avanzado**
+- ✅ **Cálculo de ratios financieros**
+- ✅ **Búsqueda por score, deudas, capacidad de pago**
+- ✅ **Interpretación automática de ratios**
+- ❌ **No Delete** (preservar información crediticia)
+
+## Consideraciones Técnicas
+
+- **Mappers manuales estáticos**: Eliminado MapStruct, implementación manual para mayor control
+- **BigDecimal**: Para todos los valores monetarios y scores
+- **Jakarta Validation**: Validación exhaustiva de datos de entrada
+- **Swagger/OpenAPI**: Documentación completa de APIs
+- **JPA sin @Query**: Solo métodos nativos de repositorio
+- **Excepciones personalizadas**: RuntimeException para manejo de errores
+- **Versionado de APIs**: Todos los endpoints bajo `/v1/`
+- **PATCH**: Para actualizaciones parciales específicas
+
+## APIs sin GetAll
+
+Siguiendo las buenas prácticas, **no se implementaron métodos GetAll** para evitar problemas de rendimiento. En su lugar se proporcionan:
+
+- **Búsquedas específicas** por criterios relevantes
+- **Filtros** por cliente, fecha, estado, etc.
+- **Paginación implícita** en las consultas de repositorio
+- **Endpoints especializados** para casos de uso específicos
+
+## ⚠️ RELACIONES CORREGIDAS
+
+**Última actualización**: Se corrigieron las relaciones según el diagrama de base de datos:
+
+- ✅ **EvaluacionCrediticia** ahora tiene relación con **InformeBuro** (id_informe_buro)
+- ✅ **InformeBuro** mantiene relación con **ConsultaBuro** (id_consulta_buro) 
+- ✅ Flujo corregido: `ConsultaBuro` → `InformeBuro` → `EvaluacionCrediticia`
+- ✅ Todos los DTOs, mappers, servicios y controladores actualizados
+- ✅ Compilación exitosa verificada 

@@ -60,18 +60,18 @@ public class ConsultaBuroController {
         }
     }
 
-    @GetMapping("/cliente/{idCliente}")
-    @Operation(summary = "Obtener consultas por cliente", 
-               description = "Recupera todas las consultas de buró de un cliente específico")
+    @GetMapping("/solicitud/{idSolicitud}")
+    @Operation(summary = "Obtener consultas por solicitud", 
+               description = "Recupera todas las consultas de buró de una solicitud específica")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Consultas encontradas exitosamente"),
-        @ApiResponse(responseCode = "404", description = "No se encontraron consultas para el cliente")
+        @ApiResponse(responseCode = "404", description = "No se encontraron consultas para la solicitud")
     })
-    public ResponseEntity<List<ConsultaBuroDTO>> getConsultasByCliente(
-            @Parameter(description = "ID del cliente prospecto", example = "12345")
-            @PathVariable("idCliente") Integer idCliente) {
+    public ResponseEntity<List<ConsultaBuroDTO>> getConsultasBySolicitud(
+            @Parameter(description = "ID de la solicitud", example = "12345")
+            @PathVariable("idSolicitud") Integer idSolicitud) {
         try {
-            List<ConsultaBuro> consultas = this.service.findByIdClienteProspecto(idCliente);
+            List<ConsultaBuro> consultas = this.service.findByIdSolicitud(idSolicitud);
             List<ConsultaBuroDTO> dtos = new ArrayList<>(consultas.size());
             
             for (ConsultaBuro consulta : consultas) {
@@ -83,18 +83,18 @@ public class ConsultaBuroController {
         }
     }
 
-    @GetMapping("/cliente/{idCliente}/ultima")
-    @Operation(summary = "Obtener última consulta de un cliente", 
-               description = "Recupera la consulta de buró más reciente de un cliente")
+    @GetMapping("/solicitud/{idSolicitud}/ultima")
+    @Operation(summary = "Obtener última consulta de una solicitud", 
+               description = "Recupera la consulta de buró más reciente de una solicitud")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Última consulta encontrada exitosamente"),
-        @ApiResponse(responseCode = "404", description = "No se encontraron consultas para el cliente")
+        @ApiResponse(responseCode = "404", description = "No se encontraron consultas para la solicitud")
     })
-    public ResponseEntity<ConsultaBuroDTO> getUltimaConsultaByCliente(
-            @Parameter(description = "ID del cliente prospecto", example = "12345")
-            @PathVariable("idCliente") Integer idCliente) {
+    public ResponseEntity<ConsultaBuroDTO> getUltimaConsultaBySolicitud(
+            @Parameter(description = "ID de la solicitud", example = "12345")
+            @PathVariable("idSolicitud") Integer idSolicitud) {
         try {
-            ConsultaBuro consulta = this.service.findLastByIdClienteProspecto(idCliente);
+            ConsultaBuro consulta = this.service.findLastByIdSolicitud(idSolicitud);
             return ResponseEntity.ok(ConsultaBuroMapper.toDTO(consulta));
         } catch (NotFoundException nfe) {
             return ResponseEntity.notFound().build();
@@ -169,24 +169,42 @@ public class ConsultaBuroController {
         }
     }
 
-    @GetMapping("/cliente/{idCliente}/score-mejor")
-    @Operation(summary = "Obtener mejor score de un cliente", 
-               description = "Recupera el mejor score crediticio obtenido por un cliente")
+    @GetMapping("/solicitud/{idSolicitud}/score-mejor")
+    @Operation(summary = "Obtener mejor score de una solicitud", 
+               description = "Recupera el mejor score crediticio obtenido para una solicitud")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Score obtenido exitosamente"),
-        @ApiResponse(responseCode = "404", description = "No se encontraron consultas para el cliente")
+        @ApiResponse(responseCode = "404", description = "No se encontraron consultas para la solicitud")
     })
     public ResponseEntity<Map<String, Object>> getBestScore(
-            @Parameter(description = "ID del cliente prospecto", example = "12345")
-            @PathVariable("idCliente") Integer idCliente) {
+            @Parameter(description = "ID de la solicitud", example = "12345")
+            @PathVariable("idSolicitud") Integer idSolicitud) {
         try {
-            var bestScore = this.service.getBestScore(idCliente);
+            var bestScore = this.service.getBestScore(idSolicitud);
             return ResponseEntity.ok(Map.of(
-                "idCliente", idCliente,
+                "idSolicitud", idSolicitud,
                 "mejorScore", bestScore,
-                "tieneConsultasExitosas", this.service.hasSuccessfulQueries(idCliente)
+                "tieneConsultasExitosas", this.service.hasSuccessfulQueries(idSolicitud)
             ));
         } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @GetMapping("/solicitud/{idSolicitud}/mejor-consulta")
+    @Operation(summary = "Obtener consulta con mejor score", 
+               description = "Recupera la consulta con mejor score para una solicitud")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Consulta con mejor score encontrada"),
+        @ApiResponse(responseCode = "404", description = "No se encontraron consultas con score para la solicitud")
+    })
+    public ResponseEntity<ConsultaBuroDTO> getBestScoreConsulta(
+            @Parameter(description = "ID de la solicitud", example = "12345")
+            @PathVariable("idSolicitud") Integer idSolicitud) {
+        try {
+            ConsultaBuro consulta = this.service.findByIdSolicitudWithBestScore(idSolicitud);
+            return ResponseEntity.ok(ConsultaBuroMapper.toDTO(consulta));
+        } catch (NotFoundException nfe) {
             return ResponseEntity.notFound().build();
         }
     }

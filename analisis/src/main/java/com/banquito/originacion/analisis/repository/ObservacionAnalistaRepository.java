@@ -1,5 +1,6 @@
 package com.banquito.originacion.analisis.repository;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -10,13 +11,15 @@ import com.banquito.originacion.analisis.model.ObservacionAnalista;
 @Repository
 public interface ObservacionAnalistaRepository extends JpaRepository<ObservacionAnalista, Long> {
 
-    List<ObservacionAnalista> findByIdSolicitud(Integer idSolicitud);
+    List<ObservacionAnalista> findByIdEvaluacion(BigDecimal idEvaluacion);
     
-    List<ObservacionAnalista> findByUsuario(String usuario);
+    List<ObservacionAnalista> findByIdUsuario(BigDecimal idUsuario);
     
-    List<ObservacionAnalista> findByIdSolicitudAndUsuario(Integer idSolicitud, String usuario);
+    List<ObservacionAnalista> findByIdEvaluacionAndIdUsuario(BigDecimal idEvaluacion, BigDecimal idUsuario);
     
-    List<ObservacionAnalista> findByIdSolicitudOrderByFechaHoraDesc(Integer idSolicitud);
+    List<ObservacionAnalista> findByIdEvaluacionOrderByFechaHoraDesc(BigDecimal idEvaluacion);
     
-    List<ObservacionAnalista> findByUsuarioOrderByFechaHoraDesc(String usuario);
+    List<ObservacionAnalista> findByIdUsuarioOrderByFechaHoraDesc(BigDecimal idUsuario);
+    
+    List<ObservacionAnalista> findByRazonIntervencionAutoEnum(String razonIntervencion);
 } 

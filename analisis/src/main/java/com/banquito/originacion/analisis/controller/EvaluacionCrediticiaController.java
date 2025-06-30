@@ -43,14 +43,14 @@ public class EvaluacionCrediticiaController {
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Obtener evaluación por ID", 
+    @Operation(summary = "Obtener evaluación crediticia por ID", 
                description = "Recupera una evaluación crediticia específica por su ID")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Evaluación encontrada exitosamente"),
         @ApiResponse(responseCode = "404", description = "Evaluación no encontrada")
     })
     public ResponseEntity<EvaluacionCrediticiaDTO> getEvaluacionById(
-            @Parameter(description = "ID de la evaluación", example = "1")
+            @Parameter(description = "ID de la evaluación crediticia", example = "1")
             @PathVariable("id") Long id) {
         try {
             EvaluacionCrediticia evaluacion = this.service.findById(id);
@@ -60,27 +60,135 @@ public class EvaluacionCrediticiaController {
         }
     }
 
-    @GetMapping("/solicitud/{idSolicitud}")
-    @Operation(summary = "Obtener evaluación por solicitud", 
-               description = "Recupera la evaluación crediticia asociada a una solicitud")
+    @GetMapping("/informe/{idInforme}")
+    @Operation(summary = "Obtener evaluaciones por informe de buró", 
+               description = "Recupera todas las evaluaciones basadas en un informe de buró específico")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Evaluación encontrada exitosamente"),
-        @ApiResponse(responseCode = "404", description = "No se encontró evaluación para la solicitud")
+        @ApiResponse(responseCode = "200", description = "Evaluaciones encontradas exitosamente"),
+        @ApiResponse(responseCode = "404", description = "No se encontraron evaluaciones para el informe")
     })
-    public ResponseEntity<EvaluacionCrediticiaDTO> getEvaluacionBySolicitud(
-            @Parameter(description = "ID de la solicitud", example = "12345")
-            @PathVariable("idSolicitud") Integer idSolicitud) {
+    public ResponseEntity<List<EvaluacionCrediticiaDTO>> getEvaluacionesByInforme(
+            @Parameter(description = "ID del informe de buró", example = "1")
+            @PathVariable("idInforme") Long idInforme) {
         try {
-            EvaluacionCrediticia evaluacion = this.service.findLastByIdSolicitud(idSolicitud);
-            return ResponseEntity.ok(EvaluacionCrediticiaMapper.toDTO(evaluacion));
+            List<EvaluacionCrediticia> evaluaciones = this.service.findByInformeBuro(idInforme);
+            List<EvaluacionCrediticiaDTO> dtos = new ArrayList<>(evaluaciones.size());
+            
+            for (EvaluacionCrediticia evaluacion : evaluaciones) {
+                dtos.add(EvaluacionCrediticiaMapper.toDTO(evaluacion));
+            }
+            return ResponseEntity.ok(dtos);
         } catch (NotFoundException nfe) {
             return ResponseEntity.notFound().build();
         }
     }
 
+    @GetMapping("/score/{scoreInterno}")
+    @Operation(summary = "Obtener evaluaciones por score interno", 
+               description = "Recupera todas las evaluaciones con un score interno específico")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Evaluaciones encontradas exitosamente"),
+        @ApiResponse(responseCode = "404", description = "No se encontraron evaluaciones con el score especificado")
+    })
+    public ResponseEntity<List<EvaluacionCrediticiaDTO>> getEvaluacionesByScoreInterno(
+            @Parameter(description = "Score interno", example = "650.5")
+            @PathVariable("scoreInterno") String scoreInterno) {
+        try {
+            java.math.BigDecimal score = new java.math.BigDecimal(scoreInterno);
+            List<EvaluacionCrediticia> evaluaciones = this.service.findByScoreInterno(score);
+            List<EvaluacionCrediticiaDTO> dtos = new ArrayList<>(evaluaciones.size());
+            
+            for (EvaluacionCrediticia evaluacion : evaluaciones) {
+                dtos.add(EvaluacionCrediticiaMapper.toDTO(evaluacion));
+            }
+            return ResponseEntity.ok(dtos);
+        } catch (NumberFormatException nfe) {
+            return ResponseEntity.badRequest().build();
+        } catch (NotFoundException nfe) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PostMapping
+    @Operation(summary = "Crear nueva evaluación crediticia", 
+               description = "Registra una nueva evaluación crediticia")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "201", description = "Evaluación creada exitosamente"),
+        @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos"),
+        @ApiResponse(responseCode = "422", description = "Error de reglas de negocio")
+    })
+    public ResponseEntity<EvaluacionCrediticiaDTO> createEvaluacion(
+            @Parameter(description = "Datos de la evaluación crediticia a crear")
+            @Valid @RequestBody EvaluacionCrediticiaDTO evaluacionDTO) {
+        try {
+            EvaluacionCrediticia evaluacion = EvaluacionCrediticiaMapper.toEntity(evaluacionDTO);
+            EvaluacionCrediticia evaluacionCreada = this.service.create(evaluacion);
+            return ResponseEntity.status(HttpStatus.CREATED).body(EvaluacionCrediticiaMapper.toDTO(evaluacionCreada));
+        } catch (CreateException ce) {
+            return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).build();
+        }
+    }
+
+    @PatchMapping("/{id}/score-interno")
+    @Operation(summary = "Actualizar score interno calculado", 
+               description = "Actualiza el score interno calculado de una evaluación crediticia específica")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Score actualizado exitosamente"),
+        @ApiResponse(responseCode = "404", description = "Evaluación no encontrada"),
+        @ApiResponse(responseCode = "422", description = "Error al actualizar el score")
+    })
+    public ResponseEntity<EvaluacionCrediticiaDTO> updateScoreInterno(
+            @Parameter(description = "ID de la evaluación", example = "1")
+            @PathVariable("id") Long id,
+            @Parameter(description = "Nuevo score interno")
+            @RequestParam("scoreInterno") String nuevoScore) {
+        try {
+            EvaluacionCrediticia evaluacion = this.service.findById(id);
+            evaluacion.setScoreInternoCalculado(new java.math.BigDecimal(nuevoScore));
+            EvaluacionCrediticia evaluacionActualizada = this.service.update(evaluacion);
+            return ResponseEntity.ok(EvaluacionCrediticiaMapper.toDTO(evaluacionActualizada));
+        } catch (NumberFormatException nfe) {
+            return ResponseEntity.badRequest().build();
+        } catch (NotFoundException nfe) {
+            return ResponseEntity.notFound().build();
+        } catch (UpdateException ue) {
+            return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).build();
+        }
+    }
+
+    @PatchMapping("/{id}/decision-analista")
+    @Operation(summary = "Actualizar decisión final del analista", 
+               description = "Actualiza la decisión final del analista para una evaluación específica")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Decisión actualizada exitosamente"),
+        @ApiResponse(responseCode = "404", description = "Evaluación no encontrada"),
+        @ApiResponse(responseCode = "422", description = "Error al actualizar la decisión")
+    })
+    public ResponseEntity<EvaluacionCrediticiaDTO> updateDecisionAnalista(
+            @Parameter(description = "ID de la evaluación", example = "1")
+            @PathVariable("id") Long id,
+            @Parameter(description = "Decisión final del analista")
+            @RequestParam("decision") String decisionAnalista,
+            @Parameter(description = "Justificación de la decisión", required = false)
+            @RequestParam(value = "justificacion", required = false) String justificacion) {
+        try {
+            EvaluacionCrediticia evaluacion = this.service.findById(id);
+            evaluacion.setDecisionFinalAnalista(decisionAnalista);
+            if (justificacion != null) {
+                evaluacion.setJustificacionAnalista(justificacion);
+            }
+            EvaluacionCrediticia evaluacionActualizada = this.service.update(evaluacion);
+            return ResponseEntity.ok(EvaluacionCrediticiaMapper.toDTO(evaluacionActualizada));
+        } catch (NotFoundException nfe) {
+            return ResponseEntity.notFound().build();
+        } catch (UpdateException ue) {
+            return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).build();
+        }
+    }
+
     @GetMapping("/solicitud/{idSolicitud}/ultima")
     @Operation(summary = "Obtener última evaluación de una solicitud", 
-               description = "Recupera la evaluación crediticia más reciente de una solicitud")
+               description = "Recupera la evaluación más reciente de una solicitud específica")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Última evaluación encontrada exitosamente"),
         @ApiResponse(responseCode = "404", description = "No se encontraron evaluaciones para la solicitud")
@@ -96,18 +204,18 @@ public class EvaluacionCrediticiaController {
         }
     }
 
-    @GetMapping("/categoria-riesgo/{categoria}")
-    @Operation(summary = "Obtener evaluaciones por categoría de riesgo", 
-               description = "Recupera todas las evaluaciones con una categoría de riesgo específica")
+    @GetMapping("/decision-analista/{decision}")
+    @Operation(summary = "Obtener evaluaciones por decisión del analista", 
+               description = "Recupera todas las evaluaciones con una decisión específica del analista")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Evaluaciones encontradas exitosamente"),
-        @ApiResponse(responseCode = "404", description = "No se encontraron evaluaciones con la categoría especificada")
+        @ApiResponse(responseCode = "404", description = "No se encontraron evaluaciones con la decisión especificada")
     })
-    public ResponseEntity<List<EvaluacionCrediticiaDTO>> getEvaluacionesByCategoriaRiesgo(
-            @Parameter(description = "Categoría de riesgo", example = "MEDIO")
-            @PathVariable("categoria") String categoriaRiesgo) {
+    public ResponseEntity<List<EvaluacionCrediticiaDTO>> getEvaluacionesByDecisionAnalista(
+            @Parameter(description = "Decisión del analista", example = "APROBADO")
+            @PathVariable("decision") String decision) {
         try {
-            List<EvaluacionCrediticia> evaluaciones = this.service.findByCategoriaRiesgo(categoriaRiesgo);
+            List<EvaluacionCrediticia> evaluaciones = this.service.findByDecisionAnalista(decision);
             List<EvaluacionCrediticiaDTO> dtos = new ArrayList<>(evaluaciones.size());
             
             for (EvaluacionCrediticia evaluacion : evaluaciones) {
@@ -119,18 +227,18 @@ public class EvaluacionCrediticiaController {
         }
     }
 
-    @GetMapping("/tipo/{esAutomatico}")
-    @Operation(summary = "Obtener evaluaciones por tipo", 
-               description = "Recupera evaluaciones automáticas o manuales")
+    @GetMapping("/solicitud/{idSolicitud}")
+    @Operation(summary = "Obtener evaluaciones por solicitud", 
+               description = "Recupera todas las evaluaciones de una solicitud específica")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Evaluaciones encontradas exitosamente"),
-        @ApiResponse(responseCode = "404", description = "No se encontraron evaluaciones del tipo especificado")
+        @ApiResponse(responseCode = "404", description = "No se encontraron evaluaciones para la solicitud")
     })
-    public ResponseEntity<List<EvaluacionCrediticiaDTO>> getEvaluacionesByTipo(
-            @Parameter(description = "Tipo de evaluación (true=automática, false=manual)", example = "true")
-            @PathVariable("esAutomatico") Boolean esAutomatico) {
+    public ResponseEntity<List<EvaluacionCrediticiaDTO>> getEvaluacionesBySolicitud(
+            @Parameter(description = "ID de la solicitud", example = "12345")
+            @PathVariable("idSolicitud") Integer idSolicitud) {
         try {
-            List<EvaluacionCrediticia> evaluaciones = this.service.findByTipoEvaluacion(esAutomatico);
+            List<EvaluacionCrediticia> evaluaciones = this.service.findByIdSolicitud(idSolicitud);
             List<EvaluacionCrediticiaDTO> dtos = new ArrayList<>(evaluaciones.size());
             
             for (EvaluacionCrediticia evaluacion : evaluaciones) {
@@ -142,29 +250,32 @@ public class EvaluacionCrediticiaController {
         }
     }
 
-    @PostMapping
-    @Operation(summary = "Crear evaluación crediticia manual", 
-               description = "Registra una nueva evaluación crediticia de forma manual")
+    @GetMapping("/resultado-automatico/{resultado}")
+    @Operation(summary = "Obtener evaluaciones por resultado automático", 
+               description = "Recupera todas las evaluaciones con un resultado automático específico")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "201", description = "Evaluación creada exitosamente"),
-        @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos"),
-        @ApiResponse(responseCode = "422", description = "Error de reglas de negocio")
+        @ApiResponse(responseCode = "200", description = "Evaluaciones encontradas exitosamente"),
+        @ApiResponse(responseCode = "404", description = "No se encontraron evaluaciones con el resultado especificado")
     })
-    public ResponseEntity<EvaluacionCrediticiaDTO> createEvaluacionManual(
-            @Parameter(description = "Datos de la evaluación a crear")
-            @Valid @RequestBody EvaluacionCrediticiaDTO evaluacionDTO) {
+    public ResponseEntity<List<EvaluacionCrediticiaDTO>> getEvaluacionesByResultadoAutomatico(
+            @Parameter(description = "Resultado automático", example = "APROBADO")
+            @PathVariable("resultado") String resultado) {
         try {
-            EvaluacionCrediticia evaluacion = EvaluacionCrediticiaMapper.toEntity(evaluacionDTO);
-            EvaluacionCrediticia evaluacionCreada = this.service.create(evaluacion);
-            return ResponseEntity.status(HttpStatus.CREATED).body(EvaluacionCrediticiaMapper.toDTO(evaluacionCreada));
-        } catch (CreateException ce) {
-            return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).build();
+            List<EvaluacionCrediticia> evaluaciones = this.service.findByResultadoAutomatico(resultado);
+            List<EvaluacionCrediticiaDTO> dtos = new ArrayList<>(evaluaciones.size());
+            
+            for (EvaluacionCrediticia evaluacion : evaluaciones) {
+                dtos.add(EvaluacionCrediticiaMapper.toDTO(evaluacion));
+            }
+            return ResponseEntity.ok(dtos);
+        } catch (NotFoundException nfe) {
+            return ResponseEntity.notFound().build();
         }
     }
 
     @PostMapping("/automatica")
     @Operation(summary = "Crear evaluación automática", 
-               description = "Crea una evaluación crediticia automática basada en una consulta de buró")
+               description = "Crea una evaluación crediticia automática basada en un informe de buró")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "201", description = "Evaluación automática creada exitosamente"),
         @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos"),
@@ -173,62 +284,13 @@ public class EvaluacionCrediticiaController {
     public ResponseEntity<EvaluacionCrediticiaDTO> createEvaluacionAutomatica(
             @Parameter(description = "ID de la solicitud", example = "12345")
             @RequestParam("idSolicitud") Integer idSolicitud,
-            @Parameter(description = "ID de la consulta de buró", example = "1")
-            @RequestParam("idConsultaBuro") Long idConsultaBuro) {
+            @Parameter(description = "ID del informe de buró", example = "1")
+            @RequestParam("idInformeBuro") Long idInformeBuro) {
         try {
-            EvaluacionCrediticia evaluacion = this.service.createAutomaticEvaluation(idSolicitud, idConsultaBuro);
+            EvaluacionCrediticia evaluacion = this.service.createAutomaticEvaluation(idSolicitud, idInformeBuro);
             return ResponseEntity.status(HttpStatus.CREATED).body(EvaluacionCrediticiaMapper.toDTO(evaluacion));
         } catch (CreateException ce) {
             return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).build();
-        }
-    }
-
-    @PatchMapping("/{id}/categoria-riesgo")
-    @Operation(summary = "Actualizar categoría de riesgo", 
-               description = "Actualiza la categoría de riesgo de una evaluación crediticia")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Categoría actualizada exitosamente"),
-        @ApiResponse(responseCode = "404", description = "Evaluación no encontrada"),
-        @ApiResponse(responseCode = "422", description = "Error al actualizar categoría")
-    })
-    public ResponseEntity<EvaluacionCrediticiaDTO> updateCategoriaRiesgo(
-            @Parameter(description = "ID de la evaluación", example = "1")
-            @PathVariable("id") Long id,
-            @Parameter(description = "Nueva categoría de riesgo")
-            @RequestParam("categoria") String nuevaCategoria) {
-        try {
-            EvaluacionCrediticia evaluacion = this.service.findById(id);
-            evaluacion.setCategoriaRiesgo(nuevaCategoria);
-            EvaluacionCrediticia evaluacionActualizada = this.service.update(evaluacion);
-            return ResponseEntity.ok(EvaluacionCrediticiaMapper.toDTO(evaluacionActualizada));
-        } catch (NotFoundException nfe) {
-            return ResponseEntity.notFound().build();
-        } catch (UpdateException ue) {
-            return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).build();
-        }
-    }
-
-    @GetMapping("/score/{score}/categoria")
-    @Operation(summary = "Calcular categoría de riesgo por score", 
-               description = "Calcula la categoría de riesgo basada en un score específico")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Categoría calculada exitosamente")
-    })
-    public ResponseEntity<Map<String, String>> calculateRiskCategory(
-            @Parameter(description = "Score crediticio", example = "680")
-            @PathVariable("score") String score) {
-        try {
-            java.math.BigDecimal scoreValue = new java.math.BigDecimal(score);
-            String categoria = this.service.calculateRiskCategory(scoreValue);
-            return ResponseEntity.ok(Map.of(
-                "score", score,
-                "categoriaRiesgo", categoria
-            ));
-        } catch (NumberFormatException e) {
-            return ResponseEntity.badRequest().body(Map.of(
-                "error", "SCORE_INVALIDO",
-                "mensaje", "El score debe ser un número válido"
-            ));
         }
     }
 

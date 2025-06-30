@@ -1,7 +1,7 @@
 package com.banquito.originacion.analisis.controller.mapper;
 
 import com.banquito.originacion.analisis.controller.dto.EvaluacionCrediticiaDTO;
-import com.banquito.originacion.analisis.model.ConsultaBuro;
+import com.banquito.originacion.analisis.model.InformeBuro;
 import com.banquito.originacion.analisis.model.EvaluacionCrediticia;
 
 public class EvaluacionCrediticiaMapper {
@@ -11,18 +11,19 @@ public class EvaluacionCrediticiaMapper {
             return null;
         }
         EvaluacionCrediticia entity = new EvaluacionCrediticia();
-        entity.setIdEvaluacionesCrediticias(dto.getIdEvaluacionesCrediticias());
+        entity.setIdEvaluacion(dto.getIdEvaluacion());
         entity.setIdSolicitud(dto.getIdSolicitud());
         
-        // Mapear la relación FK con ConsultaBuro
-        if (dto.getIdConsultaBuro() != null) {
-            entity.setConsultaBuro(new ConsultaBuro(dto.getIdConsultaBuro()));
+        if (dto.getIdInformeBuro() != null) {
+            entity.setInformeBuro(new InformeBuro(dto.getIdInformeBuro()));
         }
         
-        entity.setScoreInterno(dto.getScoreInterno());
-        entity.setCategoriaRiesgo(dto.getCategoriaRiesgo());
-        entity.setEsAutomatico(dto.getEsAutomatico());
         entity.setFechaEvaluacion(dto.getFechaEvaluacion());
+        entity.setScoreInternoCalculado(dto.getScoreInternoCalculado());
+        entity.setResultadoAutomatico(dto.getResultadoAutomatico());
+        entity.setObservacionesMotorReglas(dto.getObservacionesMotorReglas());
+        entity.setDecisionFinalAnalista(dto.getDecisionFinalAnalista());
+        entity.setJustificacionAnalista(dto.getJustificacionAnalista());
         entity.setVersion(dto.getVersion());
         return entity;
     }
@@ -32,33 +33,34 @@ public class EvaluacionCrediticiaMapper {
             return null;
         }
         EvaluacionCrediticiaDTO dto = new EvaluacionCrediticiaDTO();
-        dto.setIdEvaluacionesCrediticias(entity.getIdEvaluacionesCrediticias());
+        dto.setIdEvaluacion(entity.getIdEvaluacion());
         dto.setIdSolicitud(entity.getIdSolicitud());
+    
+        dto.setIdInformeBuro(entity.getInformeBuro() != null ? 
+            entity.getInformeBuro().getIdInformeBuro() : null);
         
-        // Mapear el ID de la consulta de buró
-        dto.setIdConsultaBuro(entity.getConsultaBuro() != null ? 
-            entity.getConsultaBuro().getIdConsultaBuro() : null);
+        dto.setInformeBuro(entity.getInformeBuro() != null ? 
+            toInformeBuroBasicDTO(entity.getInformeBuro()) : null);
         
-        // Mapear la información básica de consulta de buró
-        dto.setConsultaBuro(entity.getConsultaBuro() != null ? 
-            toConsultaBuroBasicDTO(entity.getConsultaBuro()) : null);
-        
-        dto.setScoreInterno(entity.getScoreInterno());
-        dto.setCategoriaRiesgo(entity.getCategoriaRiesgo());
-        dto.setEsAutomatico(entity.getEsAutomatico());
         dto.setFechaEvaluacion(entity.getFechaEvaluacion());
+        dto.setScoreInternoCalculado(entity.getScoreInternoCalculado());
+        dto.setResultadoAutomatico(entity.getResultadoAutomatico());
+        dto.setObservacionesMotorReglas(entity.getObservacionesMotorReglas());
+        dto.setDecisionFinalAnalista(entity.getDecisionFinalAnalista());
+        dto.setJustificacionAnalista(entity.getJustificacionAnalista());
         dto.setVersion(entity.getVersion());
         return dto;
     }
 
-    private static EvaluacionCrediticiaDTO.ConsultaBuroBasicDTO toConsultaBuroBasicDTO(ConsultaBuro consultaBuro) {
-        if (consultaBuro == null) {
+    private static EvaluacionCrediticiaDTO.InformeBuroBasicDTO toInformeBuroBasicDTO(InformeBuro informeBuro) {
+        if (informeBuro == null) {
             return null;
         }
-        EvaluacionCrediticiaDTO.ConsultaBuroBasicDTO dto = new EvaluacionCrediticiaDTO.ConsultaBuroBasicDTO();
-        dto.setIdConsultaBuro(consultaBuro.getIdConsultaBuro());
-        dto.setScoreObtenido(consultaBuro.getScoreObtenido());
-        dto.setEstadoConsulta(consultaBuro.getEstadoConsulta());
+        EvaluacionCrediticiaDTO.InformeBuroBasicDTO dto = new EvaluacionCrediticiaDTO.InformeBuroBasicDTO();
+        dto.setIdInformeBuro(informeBuro.getIdInformeBuro());
+        dto.setScore(informeBuro.getScore());
+        dto.setNumeroDeudaImpagas(informeBuro.getNumeroDeudaImpagas());
+        dto.setMontoTotalAdeudado(informeBuro.getMontoTotalAdeudado());
         return dto;
     }
 } 

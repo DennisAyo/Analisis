@@ -16,12 +16,12 @@ import com.banquito.originacion.analisis.repository.EvaluacionCrediticiaReposito
 public class EvaluacionCrediticiaService {
 
     private final EvaluacionCrediticiaRepository repository;
-    private final ConsultaBuroService consultaBuroService;
+    private final InformeBuroService informeBuroService;
 
     public EvaluacionCrediticiaService(EvaluacionCrediticiaRepository repository, 
-                                     ConsultaBuroService consultaBuroService) {
+                                     InformeBuroService informeBuroService) {
         this.repository = repository;
-        this.consultaBuroService = consultaBuroService;
+        this.informeBuroService = informeBuroService;
     }
 
     public EvaluacionCrediticia findById(Long id) {
@@ -30,7 +30,7 @@ public class EvaluacionCrediticiaService {
     }
 
     public List<EvaluacionCrediticia> findByIdSolicitud(Integer idSolicitud) {
-        List<EvaluacionCrediticia> evaluaciones = this.repository.findByIdSolicitudOrderByFechaEvaluacionDesc(idSolicitud);
+        List<EvaluacionCrediticia> evaluaciones = this.repository.findByIdSolicitudOrderByVersionDesc(idSolicitud);
         if (evaluaciones.isEmpty()) {
             throw new NotFoundException(idSolicitud.toString(), "EvaluacionCrediticia por solicitud");
         }
@@ -38,32 +38,51 @@ public class EvaluacionCrediticiaService {
     }
 
     public EvaluacionCrediticia findLastByIdSolicitud(Integer idSolicitud) {
-        return this.repository.findTopByIdSolicitudOrderByFechaEvaluacionDesc(idSolicitud)
+        return this.repository.findTopByIdSolicitudOrderByVersionDesc(idSolicitud)
                 .orElseThrow(() -> new NotFoundException(idSolicitud.toString(), "Última EvaluacionCrediticia por solicitud"));
     }
 
-    public List<EvaluacionCrediticia> findByCategoriaRiesgo(String categoriaRiesgo) {
-        List<EvaluacionCrediticia> evaluaciones = this.repository.findByCategoriaRiesgo(categoriaRiesgo);
+    public List<EvaluacionCrediticia> findByScoreInterno(BigDecimal scoreInterno) {
+        List<EvaluacionCrediticia> evaluaciones = this.repository.findByScoreInternoCalculado(scoreInterno);
         if (evaluaciones.isEmpty()) {
-            throw new NotFoundException(categoriaRiesgo, "EvaluacionCrediticia por categoría de riesgo");
+            throw new NotFoundException(scoreInterno.toString(), "EvaluacionCrediticia por score interno");
         }
         return evaluaciones;
     }
 
-    public List<EvaluacionCrediticia> findByTipoEvaluacion(Boolean esAutomatico) {
-        List<EvaluacionCrediticia> evaluaciones = this.repository.findByEsAutomatico(esAutomatico);
+    public List<EvaluacionCrediticia> findByDecisionAnalista(String decision) {
+        List<EvaluacionCrediticia> evaluaciones = this.repository.findByDecisionFinalAnalista(decision);
         if (evaluaciones.isEmpty()) {
-            throw new NotFoundException(esAutomatico.toString(), "EvaluacionCrediticia por tipo");
+            throw new NotFoundException(decision, "EvaluacionCrediticia por decisión del analista");
+        }
+        return evaluaciones;
+    }
+
+    public List<EvaluacionCrediticia> findByInformeBuro(Long idInformeBuro) {
+        List<EvaluacionCrediticia> evaluaciones = this.repository.findByInformeBuro_IdInformeBuro(idInformeBuro);
+        if (evaluaciones.isEmpty()) {
+            throw new NotFoundException(idInformeBuro.toString(), "EvaluacionCrediticia por informe de buró");
+        }
+        return evaluaciones;
+    }
+
+    public List<EvaluacionCrediticia> findByResultadoAutomatico(String resultado) {
+        List<EvaluacionCrediticia> evaluaciones = this.repository.findByResultadoAutomatico(resultado);
+        if (evaluaciones.isEmpty()) {
+            throw new NotFoundException(resultado, "EvaluacionCrediticia por resultado automático");
         }
         return evaluaciones;
     }
 
     public EvaluacionCrediticia create(EvaluacionCrediticia evaluacion) {
         try {
-            // Validar que existe la consulta de buró
-            consultaBuroService.findById(evaluacion.getConsultaBuro().getIdConsultaBuro());
+
+            informeBuroService.findById(evaluacion.getInformeBuro().getIdInformeBuro());
             
-            evaluacion.setFechaEvaluacion(LocalDateTime.now());
+            if (evaluacion.getFechaEvaluacion() == null) {
+                evaluacion.setFechaEvaluacion(LocalDateTime.now());
+            }
+            
             evaluacion.setVersion(BigDecimal.ONE);
             return this.repository.save(evaluacion);
         } catch (Exception e) {
@@ -73,7 +92,7 @@ public class EvaluacionCrediticiaService {
 
     public EvaluacionCrediticia update(EvaluacionCrediticia evaluacion) {
         try {
-            EvaluacionCrediticia existing = findById(evaluacion.getIdEvaluacionesCrediticias());
+            EvaluacionCrediticia existing = findById(evaluacion.getIdEvaluacion());
             evaluacion.setVersion(existing.getVersion().add(BigDecimal.ONE));
             return this.repository.save(evaluacion);
         } catch (Exception e) {
@@ -81,9 +100,6 @@ public class EvaluacionCrediticiaService {
         }
     }
 
-    /**
-     * Calcula la categoría de riesgo basada en el score
-     */
     public String calculateRiskCategory(BigDecimal score) {
         if (score == null) {
             return "SIN_SCORE";
@@ -101,19 +117,38 @@ public class EvaluacionCrediticiaService {
         }
     }
 
-    /**
-     * Crea una evaluación automática basada en la consulta de buró
-     */
-    public EvaluacionCrediticia createAutomaticEvaluation(Integer idSolicitud, Long idConsultaBuro) {
+    public String determineAutomaticResult(BigDecimal score) {
+        if (score == null) {
+            return "REVISION_MANUAL";
+        }
+        
+        if (score.compareTo(new BigDecimal("700")) >= 0) {
+            return "APROBADO";
+        } else if (score.compareTo(new BigDecimal("500")) < 0) {
+            return "RECHAZADO";
+        } else {
+            return "REVISION_MANUAL";
+        }
+    }
+
+    public EvaluacionCrediticia createAutomaticEvaluation(Integer idSolicitud, Long idInformeBuro) {
         try {
-            var consultaBuro = consultaBuroService.findById(idConsultaBuro);
+            var informeBuro = informeBuroService.findById(idInformeBuro);
             
             EvaluacionCrediticia evaluacion = new EvaluacionCrediticia();
             evaluacion.setIdSolicitud(idSolicitud);
-            evaluacion.setConsultaBuro(consultaBuro);
-            evaluacion.setScoreInterno(consultaBuro.getScoreObtenido());
-            evaluacion.setCategoriaRiesgo(calculateRiskCategory(consultaBuro.getScoreObtenido()));
-            evaluacion.setEsAutomatico(true);
+            evaluacion.setInformeBuro(informeBuro);
+            evaluacion.setFechaEvaluacion(LocalDateTime.now());
+            evaluacion.setScoreInternoCalculado(informeBuro.getScore());
+            
+            String resultadoAutomatico = determineAutomaticResult(informeBuro.getScore());
+            evaluacion.setResultadoAutomatico(resultadoAutomatico);
+            
+            evaluacion.setObservacionesMotorReglas(
+                "Evaluación automática. Score: " + informeBuro.getScore() + 
+                ", Resultado: " + resultadoAutomatico + 
+                ", Categoría riesgo: " + calculateRiskCategory(informeBuro.getScore())
+            );
             
             return create(evaluacion);
         } catch (Exception e) {

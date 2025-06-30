@@ -10,12 +10,16 @@ public class ConsultaBuroMapper {
             return null;
         }
         ConsultaBuro entity = new ConsultaBuro();
-        entity.setIdConsultaBuro(dto.getIdConsultaBuro());
-        entity.setIdClienteProspecto(dto.getIdClienteProspecto());
-        entity.setScoreObtenido(dto.getScoreObtenido());
+        entity.setIdConsulta(dto.getIdConsulta());
+        entity.setIdSolicitud(dto.getIdSolicitud());
         entity.setFechaConsulta(dto.getFechaConsulta());
-        entity.setDetalleDeudas(dto.getDetalleDeudas());
         entity.setEstadoConsulta(dto.getEstadoConsulta());
+        entity.setScoreExterno(dto.getScoreExterno());
+        entity.setCuentasActivas(dto.getCuentasActivas());
+        entity.setCuentasMorosas(dto.getCuentasMorosas());
+        entity.setMontoMorosoTotal(dto.getMontoMorosoTotal());
+        entity.setDiasMoraPromedio(dto.getDiasMoraPromedio());
+        entity.setFechaPrimeraMora(dto.getFechaPrimeraMora());
         entity.setVersion(dto.getVersion());
         return entity;
     }
@@ -25,12 +29,18 @@ public class ConsultaBuroMapper {
             return null;
         }
         ConsultaBuroDTO dto = new ConsultaBuroDTO();
-        dto.setIdConsultaBuro(entity.getIdConsultaBuro());
-        dto.setIdClienteProspecto(entity.getIdClienteProspecto());
-        dto.setScoreObtenido(entity.getScoreObtenido());
+        dto.setIdConsulta(entity.getIdConsulta());
+        dto.setIdSolicitud(entity.getIdSolicitud());
         dto.setFechaConsulta(entity.getFechaConsulta());
-        dto.setDetalleDeudas(entity.getDetalleDeudas());
         dto.setEstadoConsulta(entity.getEstadoConsulta());
+        dto.setScoreExterno(entity.getScoreExterno());
+        dto.setCuentasActivas(entity.getCuentasActivas());
+        dto.setCuentasMorosas(entity.getCuentasMorosas());
+        dto.setMontoMorosoTotal(entity.getMontoMorosoTotal());
+        dto.setDiasMoraPromedio(entity.getDiasMoraPromedio());
+        dto.setFechaPrimeraMora(entity.getFechaPrimeraMora());
+        dto.setDatosBuroEncriptadoInfo(entity.getDatosBuroEncriptado() != null ? 
+            "Datos encriptados disponibles" : "Sin datos encriptados");
         dto.setVersion(entity.getVersion());
         return dto;
     }

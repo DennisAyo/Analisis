@@ -30,26 +30,34 @@ public class ObservacionAnalistaService {
                 .orElseThrow(() -> new NotFoundException(id.toString(), "ObservacionAnalista"));
     }
 
-    public List<ObservacionAnalista> findByIdSolicitud(Integer idSolicitud) {
-        List<ObservacionAnalista> observaciones = this.repository.findByIdSolicitudOrderByFechaHoraDesc(idSolicitud);
+    public List<ObservacionAnalista> findByIdEvaluacion(BigDecimal idEvaluacion) {
+        List<ObservacionAnalista> observaciones = this.repository.findByIdEvaluacionOrderByFechaHoraDesc(idEvaluacion);
         if (observaciones.isEmpty()) {
-            throw new NotFoundException(idSolicitud.toString(), "ObservacionAnalista por solicitud");
+            throw new NotFoundException(idEvaluacion.toString(), "ObservacionAnalista por evaluación");
         }
         return observaciones;
     }
 
-    public List<ObservacionAnalista> findByUsuario(String usuario) {
-        List<ObservacionAnalista> observaciones = this.repository.findByUsuarioOrderByFechaHoraDesc(usuario);
+    public List<ObservacionAnalista> findByIdUsuario(BigDecimal idUsuario) {
+        List<ObservacionAnalista> observaciones = this.repository.findByIdUsuarioOrderByFechaHoraDesc(idUsuario);
         if (observaciones.isEmpty()) {
-            throw new NotFoundException(usuario, "ObservacionAnalista por usuario");
+            throw new NotFoundException(idUsuario.toString(), "ObservacionAnalista por usuario");
         }
         return observaciones;
     }
 
-    public List<ObservacionAnalista> findByIdSolicitudAndUsuario(Integer idSolicitud, String usuario) {
-        List<ObservacionAnalista> observaciones = this.repository.findByIdSolicitudAndUsuario(idSolicitud, usuario);
+    public List<ObservacionAnalista> findByIdEvaluacionAndIdUsuario(BigDecimal idEvaluacion, BigDecimal idUsuario) {
+        List<ObservacionAnalista> observaciones = this.repository.findByIdEvaluacionAndIdUsuario(idEvaluacion, idUsuario);
         if (observaciones.isEmpty()) {
-            throw new NotFoundException(idSolicitud + " - " + usuario, "ObservacionAnalista por solicitud y usuario");
+            throw new NotFoundException(idEvaluacion + "-" + idUsuario, "ObservacionAnalista por evaluación y usuario");
+        }
+        return observaciones;
+    }
+
+    public List<ObservacionAnalista> findByRazonIntervencion(String razonIntervencion) {
+        List<ObservacionAnalista> observaciones = this.repository.findByRazonIntervencionAutoEnum(razonIntervencion);
+        if (observaciones.isEmpty()) {
+            throw new NotFoundException(razonIntervencion, "ObservacionAnalista por razón de intervención");
         }
         return observaciones;
     }
@@ -66,11 +74,20 @@ public class ObservacionAnalistaService {
 
     public ObservacionAnalista update(ObservacionAnalista observacionAnalista) {
         try {
-            ObservacionAnalista existing = findById(observacionAnalista.getIdObservacionAnalista());
+            ObservacionAnalista existing = findById(observacionAnalista.getIdObservacion());
             observacionAnalista.setVersion(existing.getVersion().add(BigDecimal.ONE));
             return this.repository.save(observacionAnalista);
         } catch (Exception e) {
             throw new UpdateException("ObservacionAnalista", e.getMessage());
+        }
+    }
+
+    public void delete(Long id) {
+        try {
+            ObservacionAnalista observacionAnalista = findById(id);
+            this.repository.delete(observacionAnalista);
+        } catch (Exception e) {
+            throw new UpdateException("ObservacionAnalista", "Error al eliminar: " + e.getMessage());
         }
     }
 } 

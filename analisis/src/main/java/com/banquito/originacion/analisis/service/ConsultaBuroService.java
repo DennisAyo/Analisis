@@ -26,17 +26,17 @@ public class ConsultaBuroService {
                 .orElseThrow(() -> new NotFoundException(id.toString(), "ConsultaBuro"));
     }
 
-    public List<ConsultaBuro> findByIdClienteProspecto(Integer idClienteProspecto) {
-        List<ConsultaBuro> consultas = this.repository.findByIdClienteProspectoOrderByFechaConsultaDesc(idClienteProspecto);
+    public List<ConsultaBuro> findByIdSolicitud(Integer idSolicitud) {
+        List<ConsultaBuro> consultas = this.repository.findByIdSolicitudOrderByFechaConsultaDesc(idSolicitud);
         if (consultas.isEmpty()) {
-            throw new NotFoundException(idClienteProspecto.toString(), "ConsultaBuro por cliente");
+            throw new NotFoundException(idSolicitud.toString(), "ConsultaBuro por solicitud");
         }
         return consultas;
     }
 
-    public ConsultaBuro findLastByIdClienteProspecto(Integer idClienteProspecto) {
-        return this.repository.findTopByIdClienteProspectoOrderByFechaConsultaDesc(idClienteProspecto)
-                .orElseThrow(() -> new NotFoundException(idClienteProspecto.toString(), "Última ConsultaBuro por cliente"));
+    public ConsultaBuro findLastByIdSolicitud(Integer idSolicitud) {
+        return this.repository.findTopByIdSolicitudOrderByFechaConsultaDesc(idSolicitud)
+                .orElseThrow(() -> new NotFoundException(idSolicitud.toString(), "Última ConsultaBuro por solicitud"));
     }
 
     public List<ConsultaBuro> findByEstadoConsulta(String estadoConsulta) {
@@ -59,7 +59,7 @@ public class ConsultaBuroService {
 
     public ConsultaBuro update(ConsultaBuro consultaBuro) {
         try {
-            ConsultaBuro existing = findById(consultaBuro.getIdConsultaBuro());
+            ConsultaBuro existing = findById(consultaBuro.getIdConsulta());
             consultaBuro.setVersion(existing.getVersion().add(BigDecimal.ONE));
             return this.repository.save(consultaBuro);
         } catch (Exception e) {
@@ -67,31 +67,34 @@ public class ConsultaBuroService {
         }
     }
 
-    /**
-     * Verifica si un cliente tiene consultas previas exitosas
-     */
-    public boolean hasSuccessfulQueries(Integer idClienteProspecto) {
+    public boolean hasSuccessfulQueries(Integer idSolicitud) {
         try {
-            List<ConsultaBuro> consultas = this.repository.findByIdClienteProspectoAndEstadoConsulta(idClienteProspecto, "EXITOSA");
+            List<ConsultaBuro> consultas = this.repository.findByIdSolicitudAndEstadoConsulta(idSolicitud, "EXITOSA");
             return !consultas.isEmpty();
         } catch (Exception e) {
             return false;
         }
     }
 
-    /**
-     * Obtiene el mejor score de un cliente
-     */
-    public BigDecimal getBestScore(Integer idClienteProspecto) {
+    public BigDecimal getBestScore(Integer idSolicitud) {
         try {
-            List<ConsultaBuro> consultas = findByIdClienteProspecto(idClienteProspecto);
+            List<ConsultaBuro> consultas = findByIdSolicitud(idSolicitud);
             return consultas.stream()
-                    .map(ConsultaBuro::getScoreObtenido)
+                    .map(ConsultaBuro::getScoreExterno)
                     .filter(score -> score != null)
                     .max(BigDecimal::compareTo)
                     .orElse(BigDecimal.ZERO);
         } catch (Exception e) {
             return BigDecimal.ZERO;
         }
+    }
+
+    public ConsultaBuro findByIdSolicitudWithBestScore(Integer idSolicitud) {
+        List<ConsultaBuro> consultas = this.repository.findByIdSolicitudOrderByFechaConsultaDesc(idSolicitud);
+        return consultas.stream()
+                .filter(c -> c.getScoreExterno() != null)
+                .max((c1, c2) -> c1.getScoreExterno().compareTo(c2.getScoreExterno()))
+                .orElseThrow(() -> new NotFoundException(idSolicitud.toString(), 
+                    "ConsultaBuro con score para solicitud"));
     }
 } 

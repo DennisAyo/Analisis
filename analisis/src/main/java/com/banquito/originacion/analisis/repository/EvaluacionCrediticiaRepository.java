@@ -1,5 +1,6 @@
 package com.banquito.originacion.analisis.repository;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -13,13 +14,19 @@ public interface EvaluacionCrediticiaRepository extends JpaRepository<Evaluacion
 
     List<EvaluacionCrediticia> findByIdSolicitud(Integer idSolicitud);
     
-    Optional<EvaluacionCrediticia> findTopByIdSolicitudOrderByFechaEvaluacionDesc(Integer idSolicitud);
+    Optional<EvaluacionCrediticia> findTopByIdSolicitudOrderByVersionDesc(Integer idSolicitud);
     
-    List<EvaluacionCrediticia> findByCategoriaRiesgo(String categoriaRiesgo);
+    List<EvaluacionCrediticia> findByScoreInternoCalculado(BigDecimal scoreInterno);
     
-    List<EvaluacionCrediticia> findByEsAutomatico(Boolean esAutomatico);
+    List<EvaluacionCrediticia> findByInformeBuro_IdInformeBuro(Long idInformeBuro);
     
-    List<EvaluacionCrediticia> findByConsultaBuro_IdConsultaBuro(Long idConsultaBuro);
+    Optional<EvaluacionCrediticia> findTopByInformeBuro_IdInformeBuroOrderByVersionDesc(Long idInformeBuro);
     
-    List<EvaluacionCrediticia> findByIdSolicitudOrderByFechaEvaluacionDesc(Integer idSolicitud);
+    List<EvaluacionCrediticia> findByIdSolicitudOrderByVersionDesc(Integer idSolicitud);
+    
+    List<EvaluacionCrediticia> findByScoreInternoCalculadoBetween(BigDecimal scoreMin, BigDecimal scoreMax);
+    
+    List<EvaluacionCrediticia> findByDecisionFinalAnalista(String decision);
+    
+    List<EvaluacionCrediticia> findByResultadoAutomatico(String resultadoAutomatico);
 } 
