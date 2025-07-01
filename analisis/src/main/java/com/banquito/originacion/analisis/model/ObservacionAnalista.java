@@ -1,5 +1,6 @@
 package com.banquito.originacion.analisis.model;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -10,18 +11,11 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import jakarta.persistence.Version;
 
 @Entity
 @Table(name = "observacion_analista")
-@Getter
-@Setter
-@NoArgsConstructor
-@ToString
-public class ObservacionAnalista {
+public class ObservacionAnalista implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -44,12 +38,30 @@ public class ObservacionAnalista {
     @Column(name = "fecha_hora", nullable = false)
     private LocalDateTime fechaHora;
 
-    @Column(name = "version", precision = 9, scale = 0, nullable = false)
-    private BigDecimal version;
+    @Version
+    @Column(name = "version")
+    private Long version;
+
+    public ObservacionAnalista() {}
 
     public ObservacionAnalista(Long idObservacion) {
         this.idObservacion = idObservacion;
     }
+
+    public Long getIdObservacion() { return idObservacion; }
+    public void setIdObservacion(Long idObservacion) { this.idObservacion = idObservacion; }
+    public BigDecimal getIdEvaluacion() { return idEvaluacion; }
+    public void setIdEvaluacion(BigDecimal idEvaluacion) { this.idEvaluacion = idEvaluacion; }
+    public BigDecimal getIdUsuario() { return idUsuario; }
+    public void setIdUsuario(BigDecimal idUsuario) { this.idUsuario = idUsuario; }
+    public String getRazonIntervencionAutoEnum() { return razonIntervencionAutoEnum; }
+    public void setRazonIntervencionAutoEnum(String razonIntervencionAutoEnum) { this.razonIntervencionAutoEnum = razonIntervencionAutoEnum; }
+    public String getJustificacion() { return justificacion; }
+    public void setJustificacion(String justificacion) { this.justificacion = justificacion; }
+    public LocalDateTime getFechaHora() { return fechaHora; }
+    public void setFechaHora(LocalDateTime fechaHora) { this.fechaHora = fechaHora; }
+    public Long getVersion() { return version; }
+    public void setVersion(Long version) { this.version = version; }
 
     @Override
     public int hashCode() {
@@ -74,5 +86,18 @@ public class ObservacionAnalista {
         } else if (!idObservacion.equals(other.idObservacion))
             return false;
         return true;
+    }
+
+    @Override
+    public String toString() {
+        return "ObservacionAnalista{" +
+                "idObservacion=" + idObservacion +
+                ", idEvaluacion=" + idEvaluacion +
+                ", idUsuario=" + idUsuario +
+                ", razonIntervencionAutoEnum='" + razonIntervencionAutoEnum + '\'' +
+                ", justificacion='" + justificacion + '\'' +
+                ", fechaHora=" + fechaHora +
+                ", version=" + version +
+                '}';
     }
 } 

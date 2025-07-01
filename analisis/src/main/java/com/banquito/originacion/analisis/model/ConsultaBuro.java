@@ -1,5 +1,6 @@
 package com.banquito.originacion.analisis.model;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -11,18 +12,11 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import jakarta.persistence.Version;
 
 @Entity
 @Table(name = "consultas_buro")
-@Getter
-@Setter
-@NoArgsConstructor
-@ToString
-public class ConsultaBuro {
+public class ConsultaBuro implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -60,12 +54,40 @@ public class ConsultaBuro {
     @Column(name = "datos_buro_encriptado")
     private byte[] datosBuroEncriptado;
 
-    @Column(name = "version", precision = 9, scale = 0, nullable = false)
-    private BigDecimal version;
+    @Version
+    @Column(name = "version")
+    private Long version;
+
+    public ConsultaBuro() {}
 
     public ConsultaBuro(Long idConsulta) {
         this.idConsulta = idConsulta;
     }
+
+    public Long getIdConsulta() { return idConsulta; }
+    public void setIdConsulta(Long idConsulta) { this.idConsulta = idConsulta; }
+    public Integer getIdSolicitud() { return idSolicitud; }
+    public void setIdSolicitud(Integer idSolicitud) { this.idSolicitud = idSolicitud; }
+    public LocalDateTime getFechaConsulta() { return fechaConsulta; }
+    public void setFechaConsulta(LocalDateTime fechaConsulta) { this.fechaConsulta = fechaConsulta; }
+    public String getEstadoConsulta() { return estadoConsulta; }
+    public void setEstadoConsulta(String estadoConsulta) { this.estadoConsulta = estadoConsulta; }
+    public BigDecimal getScoreExterno() { return scoreExterno; }
+    public void setScoreExterno(BigDecimal scoreExterno) { this.scoreExterno = scoreExterno; }
+    public BigDecimal getCuentasActivas() { return cuentasActivas; }
+    public void setCuentasActivas(BigDecimal cuentasActivas) { this.cuentasActivas = cuentasActivas; }
+    public BigDecimal getCuentasMorosas() { return cuentasMorosas; }
+    public void setCuentasMorosas(BigDecimal cuentasMorosas) { this.cuentasMorosas = cuentasMorosas; }
+    public BigDecimal getMontoMorosoTotal() { return montoMorosoTotal; }
+    public void setMontoMorosoTotal(BigDecimal montoMorosoTotal) { this.montoMorosoTotal = montoMorosoTotal; }
+    public BigDecimal getDiasMoraPromedio() { return diasMoraPromedio; }
+    public void setDiasMoraPromedio(BigDecimal diasMoraPromedio) { this.diasMoraPromedio = diasMoraPromedio; }
+    public LocalDate getFechaPrimeraMora() { return fechaPrimeraMora; }
+    public void setFechaPrimeraMora(LocalDate fechaPrimeraMora) { this.fechaPrimeraMora = fechaPrimeraMora; }
+    public byte[] getDatosBuroEncriptado() { return datosBuroEncriptado; }
+    public void setDatosBuroEncriptado(byte[] datosBuroEncriptado) { this.datosBuroEncriptado = datosBuroEncriptado; }
+    public Long getVersion() { return version; }
+    public void setVersion(Long version) { this.version = version; }
 
     @Override
     public int hashCode() {
@@ -91,5 +113,21 @@ public class ConsultaBuro {
             return false;
         return true;
     }
-    
+
+    @Override
+    public String toString() {
+        return "ConsultaBuro{" +
+                "idConsulta=" + idConsulta +
+                ", idSolicitud=" + idSolicitud +
+                ", fechaConsulta=" + fechaConsulta +
+                ", estadoConsulta='" + estadoConsulta + '\'' +
+                ", scoreExterno=" + scoreExterno +
+                ", cuentasActivas=" + cuentasActivas +
+                ", cuentasMorosas=" + cuentasMorosas +
+                ", montoMorosoTotal=" + montoMorosoTotal +
+                ", diasMoraPromedio=" + diasMoraPromedio +
+                ", fechaPrimeraMora=" + fechaPrimeraMora +
+                ", version=" + version +
+                '}';
+    }
 } 

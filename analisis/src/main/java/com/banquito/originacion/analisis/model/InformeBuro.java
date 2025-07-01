@@ -1,5 +1,6 @@
 package com.banquito.originacion.analisis.model;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 
 import jakarta.persistence.Column;
@@ -10,18 +11,11 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import jakarta.persistence.Version;
 
 @Entity
 @Table(name = "informes_buro")
-@Getter
-@Setter
-@NoArgsConstructor
-@ToString
-public class InformeBuro {
+public class InformeBuro implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -29,8 +23,11 @@ public class InformeBuro {
     private Long idInformeBuro;
 
     @ManyToOne
-    @JoinColumn(name = "id_consulta_buro", nullable = false)
+    @JoinColumn(name = "id_consulta_buro", referencedColumnName = "id_consulta", insertable = false, updatable = false)
     private ConsultaBuro consultaBuro;
+
+    @Column(name = "id_consulta_buro", nullable = false)
+    private Long idConsultaBuro;
 
     @Column(name = "score", precision = 4, scale = 0)
     private BigDecimal score;
@@ -47,12 +44,34 @@ public class InformeBuro {
     @Column(name = "json_respuesta_completa", columnDefinition = "jsonb")
     private String jsonRespuestaCompleta;
 
-    @Column(name = "version", precision = 9, scale = 0, nullable = false)
-    private BigDecimal version;
+    @Version
+    @Column(name = "version")
+    private Long version;
+
+    public InformeBuro() {}
 
     public InformeBuro(Long idInformeBuro) {
         this.idInformeBuro = idInformeBuro;
     }
+
+    public Long getIdInformeBuro() { return idInformeBuro; }
+    public void setIdInformeBuro(Long idInformeBuro) { this.idInformeBuro = idInformeBuro; }
+    public ConsultaBuro getConsultaBuro() { return consultaBuro; }
+    public void setConsultaBuro(ConsultaBuro consultaBuro) { this.consultaBuro = consultaBuro; }
+    public Long getIdConsultaBuro() { return idConsultaBuro; }
+    public void setIdConsultaBuro(Long idConsultaBuro) { this.idConsultaBuro = idConsultaBuro; }
+    public BigDecimal getScore() { return score; }
+    public void setScore(BigDecimal score) { this.score = score; }
+    public Integer getNumeroDeudaImpagas() { return numeroDeudaImpagas; }
+    public void setNumeroDeudaImpagas(Integer numeroDeudaImpagas) { this.numeroDeudaImpagas = numeroDeudaImpagas; }
+    public BigDecimal getMontoTotalAdeudado() { return montoTotalAdeudado; }
+    public void setMontoTotalAdeudado(BigDecimal montoTotalAdeudado) { this.montoTotalAdeudado = montoTotalAdeudado; }
+    public BigDecimal getCapacidadPagoReportada() { return capacidadPagoReportada; }
+    public void setCapacidadPagoReportada(BigDecimal capacidadPagoReportada) { this.capacidadPagoReportada = capacidadPagoReportada; }
+    public String getJsonRespuestaCompleta() { return jsonRespuestaCompleta; }
+    public void setJsonRespuestaCompleta(String jsonRespuestaCompleta) { this.jsonRespuestaCompleta = jsonRespuestaCompleta; }
+    public Long getVersion() { return version; }
+    public void setVersion(Long version) { this.version = version; }
 
     @Override
     public int hashCode() {
@@ -77,5 +96,19 @@ public class InformeBuro {
         } else if (!idInformeBuro.equals(other.idInformeBuro))
             return false;
         return true;
+    }
+
+    @Override
+    public String toString() {
+        return "InformeBuro{" +
+                "idInformeBuro=" + idInformeBuro +
+                ", idConsultaBuro=" + idConsultaBuro +
+                ", score=" + score +
+                ", numeroDeudaImpagas=" + numeroDeudaImpagas +
+                ", montoTotalAdeudado=" + montoTotalAdeudado +
+                ", capacidadPagoReportada=" + capacidadPagoReportada +
+                ", jsonRespuestaCompleta='" + jsonRespuestaCompleta + '\'' +
+                ", version=" + version +
+                '}';
     }
 } 

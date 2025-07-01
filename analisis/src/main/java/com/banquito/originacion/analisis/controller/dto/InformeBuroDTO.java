@@ -6,11 +6,11 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Getter
-@Setter
+@Data
+@NoArgsConstructor
 @Schema(description = "DTO para el informe detallado de buró crediticio")
 public class InformeBuroDTO {
 
@@ -43,13 +43,13 @@ public class InformeBuroDTO {
 
     @DecimalMin(value = "1", message = "La versión debe ser mayor a 0")
     @Schema(description = "Versión del registro para control de concurrencia", example = "1")
-    private BigDecimal version;
+    private Long version;
 
     @Schema(description = "Información básica de la consulta de buró asociada")
     private ConsultaBuroBasicDTO consultaBuro;
 
-    @Getter
-    @Setter
+    @Data
+    @NoArgsConstructor
     @Schema(description = "Información básica de la consulta de buró")
     public static class ConsultaBuroBasicDTO {
         
